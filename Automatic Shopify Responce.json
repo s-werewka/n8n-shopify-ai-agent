@@ -1,0 +1,1396 @@
+{
+  "name": "Automatic Shopify Responce",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -608,
+        -16
+      ],
+      "id": "05d91f65-ce58-43ad-98da-cdaac6aedb36",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N48mhOEfSMdM4goC",
+          "name": "werewkastasiu@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "36afcdf0-010a-438c-856f-4a966d8197d5",
+              "leftValue": "={{ $json.From }}",
+              "rightValue": "no-reply",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "d149a168-80ce-4a83-85d4-789c069d551a",
+              "leftValue": "={{ $json.From }}",
+              "rightValue": "noreply",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            },
+            {
+              "id": "82755e60-811e-432a-ab5b-02a967edf439",
+              "leftValue": "={{ $json.snippet }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        -448,
+        -16
+      ],
+      "id": "ca51c0ec-570e-4eb4-b657-cbef487d5d7f",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=Jesteś zaawansowanym klasyfikatorem wiadomości e-mail dla sklepu internetowego opartego o platformę Shopify. Twoim jedynym zadaniem jest analiza poniższej wiadomości od klienta i przypisanie jej do JEDNEJ z czterech kategorii.\n\nZwróć TYLKO I WYŁĄCZNIE cyfrę odpowiadającą kategorii (0, 1, 2 lub 3). Nie dopisuj żadnego tekstu, kropek ani wyjaśnień.\n\nKategorie:\n0 - Zapytanie o status zamówienia (np. gdzie jest paczka, kiedy dostawa, brakujący towar z zamówienia).\n1 - Zapytanie o zwroty lub reklamacje (np. chcę dokonać zwrotu, jak odesłać towar, produkt jest uszkodzony, formularz zwrotu).\n2 - Wiadomość wymagająca pracownika / BOK (np. nietypowe pytania biznesowe, oferty współpracy, prośby o rabaty hurtowe, skomplikowane problemy, pytania o dostępność produktów).\n3 - Spam lub wiadomości automatyczne (np. newslettery, reklamy, potwierdzenia subskrypcji).\n\nWiadomość od klienta do analizy:\n{{ $('Gmail Trigger').item.json.snippet }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -240,
+        -16
+      ],
+      "id": "16105f37-5687-42b7-94eb-ca3afcfabe97",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "iC0rPhpds7bBIPjw",
+          "name": "api; me"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output[0].content[0].text }}",
+                    "rightValue": "0",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "e12189e4-3707-4111-99d6-36cc523f4af0"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Order Status"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "4af1e339-a7dc-4a48-8751-4c25c8d73ea6",
+                    "leftValue": "={{ $json.output[0].content[0].text }}",
+                    "rightValue": "1",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Return"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "cd6117db-07da-4734-9d01-7da4af71365d",
+                    "leftValue": "={{ $json.output[0].content[0].text }}",
+                    "rightValue": "2",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Needs support"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "f981a553-6f02-473f-9256-9c2d9b1c5260",
+                    "leftValue": "={{ $json.output[0].content[0].text }}",
+                    "rightValue": "3",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Spam"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        80,
+        -48
+      ],
+      "id": "2a2d94de-ffea-4b67-b9a3-d8d1946b86bb",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo-1106",
+          "mode": "list",
+          "cachedResultName": "GPT-3.5-TURBO-1106"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=Jesteś asystentem bazy danych sklepu Shopify. Twoim jedynym zadaniem jest przeanalizowanie poniższej wiadomości od klienta i wyciągnięcie z niej NUMERU ZAMÓWIENIA.\n\nReguły:\n1. Zwróć TYLKO I WYŁĄCZNIE sam numer zamówienia (np. 1024 lub #1024).\n2. Nie dopisuj żadnych słów, kratek, spacji ani znaków interpunkcyjnych.\n3. Jeśli w mailu NIE MA numeru zamówienia, zwróć dokładnie jedno słowo: NONE\n\nWiadomość klienta:\n{{ $('Gmail Trigger').item.json.snippet }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        384,
+        -352
+      ],
+      "id": "7349c37d-d582-4e56-af1f-4b0b4588890b",
+      "name": "Message a model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "iC0rPhpds7bBIPjw",
+          "name": "api; me"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=Jesteś precyzyjnym filtrem danych. Przeczytaj wiadomość klienta i wyciągnij z niej wyłącznie numer zamówienia.\n\nZasady:\n1. Jeśli w tekście znajduje się numer zamówienia (np. #1424 lub 1424), zwróć TYLKO te cyfry (np. 1424). Usunięto znak #.\n2. Jeśli w tekście nie ma żadnego numeru zamówienia, zwróć dokładnie jedno słowo: BRAK.\n3. Nie dopisuj żadnych innych słów, kropkek ani znaków formatowania markdown.\n\n{{ $('Gmail Trigger').item.json.snippet }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        368,
+        -48
+      ],
+      "id": "f53593ff-6530-4e5a-b100-4f0152a6fdbc",
+      "name": "Message a model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "iC0rPhpds7bBIPjw",
+          "name": "api; me"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6302e677-7238-4a1e-86be-1cfac8705464",
+              "leftValue": "={{ $json.output[0].content[0].text }}",
+              "rightValue": "NONE",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        736,
+        -352
+      ],
+      "id": "c3be43d2-26c9-4838-abf8-14e6fbdee1f9",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Gmail Trigger').item.json.From }}",
+        "subject": "Order status inquiry",
+        "emailType": "text",
+        "message": "Hi!   We'd love to help you check your order status, but it looks like you forgot to include your order number.  Please reply to this email with your order number (e.g., #1234) so we can check where your parcel is!  Best regards, {SHOP NAME}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        864,
+        -592
+      ],
+      "id": "18677db4-55a7-47ae-8795-74e6004236b3",
+      "name": "Send a message",
+      "webhookId": "e4e29d80-6610-4915-973e-ad49712d8846",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N48mhOEfSMdM4goC",
+          "name": "werewkastasiu@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1qS89ANSZxN9A1wJiElUDKJX5sMDcZT7tGixcdMatxt8/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Arkusz1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qS89ANSZxN9A1wJiElUDKJX5sMDcZT7tGixcdMatxt8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "threadId",
+              "displayName": "threadId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "labelIds",
+              "displayName": "labelIds",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1024,
+        -592
+      ],
+      "id": "b931051d-3368-4ff7-8b9e-aae9fb4fa6f4",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lTklSGCA6Hqn4oNH",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f671fcd5-8627-4bda-8f57-7d76fedd67e3",
+              "name": "order_id",
+              "value": "={{ $json.output[0].content[0].text.replace('#', '').trim() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        912,
+        -368
+      ],
+      "id": "5cd2157f-669f-4467-955b-a38a5933b023",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f705e1d9-5ca3-4bfa-8262-d8a7aab1b453",
+              "leftValue": "=",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1312,
+        -368
+      ],
+      "id": "05e22243-e9a3-4f8f-b58a-445004b53e83",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=Jesteś pomocnym asystentem sklepu internetowego. Klient zapytał o status swojego zamówienia. Na podstawie poniższych danych z systemu Shopify, odpowiedz mu w miły i zwięzły sposób po polsku, podając status płatności, status wysyłki oraz numery śledzenia, jeśli są dostępne.\nDane zamówienia:\n{{ $json.orders }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1520,
+        -464
+      ],
+      "id": "d5d9eba9-22f6-458d-861c-a012000d7f94",
+      "name": "Message a model3",
+      "credentials": {
+        "openAiApi": {
+          "id": "iC0rPhpds7bBIPjw",
+          "name": "api; me"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Gmail Trigger').item.json.From }}",
+        "subject": "=Your order status:  {{ $('Edit Fields').item.json.order_id }}",
+        "emailType": "text",
+        "message": "={{ $json.output[0].content[0].text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1872,
+        -464
+      ],
+      "id": "ff346752-e346-4191-a527-1f8e789163b9",
+      "name": "Send a message1",
+      "webhookId": "867ecb2d-b743-4299-876f-29164f841e08",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N48mhOEfSMdM4goC",
+          "name": "werewkastasiu@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1o0UsgmLLJC2wxII5owtdKI-DYCGDjaPl15jnLtLvan0",
+          "mode": "list",
+          "cachedResultName": "Status",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1o0UsgmLLJC2wxII5owtdKI-DYCGDjaPl15jnLtLvan0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Arkusz1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1o0UsgmLLJC2wxII5owtdKI-DYCGDjaPl15jnLtLvan0/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "threadId",
+              "displayName": "threadId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "labelIds",
+              "displayName": "labelIds",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2080,
+        -464
+      ],
+      "id": "23f0960b-e486-4aa8-972d-10dc79636742",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lTklSGCA6Hqn4oNH",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Gmail Trigger').item.json.From }}",
+        "subject": "=We couldn't find an order with that number",
+        "message": "Hi there! Unfortunately, we couldn't find any order matching the number you provided in our chat. Here is what you can do next: •\tCheck the number: Make sure there are no typos (e.g., check if you typed 1001 instead of #1001). •\tCheck your email: You can find your correct order number in the confirmation email we sent you right after your purchase. If you are still having trouble, simply reply to this email with the email address you used during checkout – we'll be happy to help you find it! Best regards, Customer Support Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1520,
+        -272
+      ],
+      "id": "be816a08-88dc-4f76-866d-3493cac8abf3",
+      "name": "Send a message2",
+      "webhookId": "0130d878-375c-4e41-8c08-bb76f983bf8f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N48mhOEfSMdM4goC",
+          "name": "werewkastasiu@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1RrEKnCcz5oboqju7JaCcdGl8hKfxPe2PFu0H6OKFm_o",
+          "mode": "list",
+          "cachedResultName": "Wrong order number",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RrEKnCcz5oboqju7JaCcdGl8hKfxPe2PFu0H6OKFm_o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Arkusz1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RrEKnCcz5oboqju7JaCcdGl8hKfxPe2PFu0H6OKFm_o/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1728,
+        -272
+      ],
+      "id": "74670afa-ac9b-4fdc-ad88-760ba19d18df",
+      "name": "Append row in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lTklSGCA6Hqn4oNH",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2a652a09-2aa9-47cb-828c-10f885816505",
+              "leftValue": "={{ $json.output[0].content[0].text }}",
+              "rightValue": "BRAK",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        976,
+        -48
+      ],
+      "id": "a41c2287-d1ce-436f-9743-5df6058996c6",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Gmail Trigger').item.json.From }}",
+        "subject": "Action required: We couldn't find your order number",
+        "emailType": "text",
+        "message": "Hi there, Thank you for reaching out! We received your message regarding your return, but we couldn't find a valid order number in your request. To help us process your return quickly, please reply directly to this email with: •\tYour correct order number (e.g., 1424 – you can find this in your purchase confirmation email). •\tThe email address used to place the order. Once we have this information, we will immediately send you the next steps and return instructions. Best regards, Customer Support Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1216,
+        -96
+      ],
+      "id": "f13a5fa8-74f1-4313-81a0-db25dcd9ab23",
+      "name": "Send a message3",
+      "webhookId": "f9886532-16d0-4839-91dd-8a1f6ad4f635",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N48mhOEfSMdM4goC",
+          "name": "werewkastasiu@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1RrEKnCcz5oboqju7JaCcdGl8hKfxPe2PFu0H6OKFm_o",
+          "mode": "list",
+          "cachedResultName": "Wrong order number",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RrEKnCcz5oboqju7JaCcdGl8hKfxPe2PFu0H6OKFm_o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Arkusz1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RrEKnCcz5oboqju7JaCcdGl8hKfxPe2PFu0H6OKFm_o/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "threadId",
+              "displayName": "threadId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "labelIds",
+              "displayName": "labelIds",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1424,
+        -96
+      ],
+      "id": "b0aa60ed-0bcb-4ca6-bc50-d2b7070ab50a",
+      "name": "Append row in sheet3",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lTklSGCA6Hqn4oNH",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=You are a customer support agent. Your job is to write a clean, ready-to-send return instruction email based on the Shopify order data provided.\n\nOrder data:\n{{ $json.output[0].content[0].text }}\n\nStrict Rules:\n1. Output ONLY the actual email body. \n2. Do NOT include introductory phrases like \"Sure! Here is...\", \"Here is the email:\", or any conversational text directed at me.\n3. Do NOT use markdown horizontal lines (---) at the beginning or end.\n4. Start directly with the greeting (e.g., \"Hi there,\" or \"Dear Customer,\").\n5. Keep the tone friendly, professional, and clear."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1568,
+        80
+      ],
+      "id": "86f63863-a65e-4589-b8de-7e1deb11df89",
+      "name": "Message a model4",
+      "credentials": {
+        "openAiApi": {
+          "id": "iC0rPhpds7bBIPjw",
+          "name": "api; me"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Gmail Trigger').item.json.From }}",
+        "subject": "=Return instructions for your order #{{ $('If2').item.json.output[0].content[0].text }}",
+        "message": "={{ $json.output[0].content[0].text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1920,
+        80
+      ],
+      "id": "353564eb-45a2-4218-9cc3-eaa20c529f58",
+      "name": "Send a message4",
+      "webhookId": "2afde01d-b684-496e-a814-f6b2dc4a2f45",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N48mhOEfSMdM4goC",
+          "name": "werewkastasiu@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "152fEIYW28lnaAnwcTcj4b8_F7xzNO6TlR4yrokE6nHA",
+          "mode": "list",
+          "cachedResultName": "Return",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/152fEIYW28lnaAnwcTcj4b8_F7xzNO6TlR4yrokE6nHA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Arkusz1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/152fEIYW28lnaAnwcTcj4b8_F7xzNO6TlR4yrokE6nHA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2144,
+        80
+      ],
+      "id": "62ceeebd-181b-4dc0-8458-e560ef4cd745",
+      "name": "Append row in sheet4",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lTklSGCA6Hqn4oNH",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "STARRED"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        352,
+        160
+      ],
+      "id": "1841a649-c558-44ad-b022-f6a34d6aad0e",
+      "name": "Add label to message",
+      "webhookId": "da205728-04f0-4ae5-96f2-d966168fa3e0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N48mhOEfSMdM4goC",
+          "name": "werewkastasiu@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Gmail Trigger').item.json.From }}",
+        "subject": "=We have received your support request",
+        "emailType": "text",
+        "message": "=",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        864,
+        160
+      ],
+      "id": "ea508ae5-f52c-48e3-bb8c-8f99c311d9cd",
+      "name": "Send a message5",
+      "webhookId": "2479e033-0710-4d75-9cd7-c5cb53793d40",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N48mhOEfSMdM4goC",
+          "name": "werewkastasiu@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are an empathetic customer support assistant. Your job is to draft a personalized, reassuring acknowledgment email to a customer whose request needs human intervention.\n\nAnalyze the customer's message and extract the main topic. Then, generate ONLY the email body.\n\nStrict Rules:\n1. Output ONLY the raw email body text. No conversational filler like \"Here is the draft:\".\n2. Start directly with \"Hi there,\" or \"Dear Customer,\".\n3. In the first paragraph, include a personalized sentence showing you understand their specific issue (e.g., \"I understand you are having trouble with...\" or \"I see that you have a question about...\").\n4. Explain that while you are an AI, you have immediately escalated this to a human agent who will review their case and reply within 24 hours.\n5. Keep the tone warm, professional, and helpful.\n6. Write the entire email in English."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        560,
+        160
+      ],
+      "id": "07047d12-cc22-4a9f-854d-4c87a414693e",
+      "name": "Message a model5",
+      "credentials": {
+        "openAiApi": {
+          "id": "iC0rPhpds7bBIPjw",
+          "name": "api; me"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "8955777818",
+        "text": "=🔔 Nowe zgłoszenie od klienta wymaga Twojej uwagi!  📧 Od: {{ $('Gmail Trigger').item.json.snippet }} 📝 Treść: {{ $('Gmail Trigger').item.json.From }}Wiadomość została automatycznie przekazana do sekcji Support. Sprawdź skrzynkę!",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1072,
+        160
+      ],
+      "id": "206b4cd1-dd28-4f55-8fbe-0e2bd9e10a7a",
+      "name": "Send a text message",
+      "webhookId": "04deec55-8f22-4246-a4f4-0183225538d1",
+      "credentials": {
+        "telegramApi": {
+          "id": "fTN7lr71G8I6D2lX",
+          "name": "PZYCHSON"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "SPAM"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        384,
+        400
+      ],
+      "id": "06c5da6d-8c98-479d-9c9f-d31c4409036e",
+      "name": "Add label to message1",
+      "webhookId": "e346b623-d8cf-4724-bb0b-6805c4517f0a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "N48mhOEfSMdM4goC",
+          "name": "werewkastasiu@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "operation": "get",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.shopify",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        -368
+      ],
+      "id": "64f3d813-249f-4ca6-8598-c080d4d9907c",
+      "name": "Get an order",
+      "credentials": {
+        "shopifyAccessTokenApi": {
+          "id": "eRwAuvmDxOWdkKRZ",
+          "name": "Shopify Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "operation": "get",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.shopify",
+      "typeVersion": 1,
+      "position": [
+        720,
+        -48
+      ],
+      "id": "1df310b9-f501-47aa-a01a-efaecb83042f",
+      "name": "Get an order1",
+      "credentials": {
+        "shopifyAccessTokenApi": {
+          "id": "eRwAuvmDxOWdkKRZ",
+          "name": "Shopify Access Token account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message a model2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add label to message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add label to message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Get an order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Message a model3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model3": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message2": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model2": {
+      "main": [
+        [
+          {
+            "node": "Get an order1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Send a message3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message a model4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message3": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model4": {
+      "main": [
+        [
+          {
+            "node": "Send a message4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message4": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add label to message": {
+      "main": [
+        [
+          {
+            "node": "Message a model5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model5": {
+      "main": [
+        [
+          {
+            "node": "Send a message5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message5": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get an order": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get an order1": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "d61d6cb4-e6d4-4bc3-b72d-7881be052d4d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "afdd7c7f9c788226d2e3c76e9233b868ba8dcced4ecd9bae92237ed76e9755b7"
+  },
+  "nodeGroups": [],
+  "id": "OlGloLIhJqPG7Bkg",
+  "tags": []
+}
